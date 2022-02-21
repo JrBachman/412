@@ -1,0 +1,2 @@
+23 45 246.750000 someString
+a=23, b=45, x=246.75, s=someString

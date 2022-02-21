@@ -1,0 +1,4 @@
+//	A silly fragment to be #include-ed in the introC-o.c program.
+//	In general this is not good practice, but I wanted to show you
+//	that this can be done
+printf("One more print for the road.\n");
