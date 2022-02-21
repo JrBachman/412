@@ -6,7 +6,6 @@
 
 int main(int argc, const char* argv[])
 {
-	//	usual test of argc
     int counter = 0;
 	char word[50];
     char target[50];
@@ -17,7 +16,6 @@ int main(int argc, const char* argv[])
     for (int i = 2; i < argc; i++){
         in_file = fopen(argv[i], "r");
         while(fscanf(in_file, "%s", word) != EOF){
-            //printf("%s\n", word);
             if(strcmp(word, target) == 0){
                 counter++;
             }
