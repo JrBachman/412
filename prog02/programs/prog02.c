@@ -23,8 +23,8 @@ int main(int argc, const char* argv[])
         fclose(in_file);
         
     }
-    printf("%d", counter);
-    return 0;
+    printf("The number of occurances is: %d\n", counter);
+    return counter;
     
 
 }
