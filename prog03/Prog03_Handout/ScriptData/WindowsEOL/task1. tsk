@@ -1,0 +1,9 @@
+gray clown.tga
+gray clown.tga
+flipV clown.tga
+channel -g bottles.tga
+gray clown.tga
+channel -r Renoir.tga
+channel -b Seurat.tga
+flipH clown.tga
+gray clown.tga

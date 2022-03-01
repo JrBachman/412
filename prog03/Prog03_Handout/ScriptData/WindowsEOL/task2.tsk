@@ -1,0 +1,11 @@
+crop clown.tga 24 120 85 210
+flipV clown.tga
+crop Tyler.tga 24 120 85 210
+crop Renoir.tga 100 20 60 80
+flipH clown.tga
+channel -g bottles.tga
+gray clown.tga
+channel -r Renoir.tga
+channel -b Seurat.tga
+flipH clown.tga
+gray clown.tga

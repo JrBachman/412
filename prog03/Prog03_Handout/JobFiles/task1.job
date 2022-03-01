@@ -1,0 +1,9 @@
+./executables/gray ../Images/clown.tga ../Output
+./executables/gray ../Images/clown.tga ../Output
+./executables/flipV ../Images/clown.tga ../Output
+./executables/channel -g ../Images/bottles.tga ../Output
+./executables/gray ../Images/clown.tga ../Output
+./executables/channel -r ../Images/Renoir.tga ../Output
+./executables/channel -b ../Images/Seurat.tga ../Output
+./executables/flipH ../Images/clown.tga ../Output
+./executables/gray ../Images/clown.tga ../Output

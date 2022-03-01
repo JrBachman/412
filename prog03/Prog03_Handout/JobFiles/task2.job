@@ -1,0 +1,11 @@
+./executables/crop ../Images/clown.tga ../Output 24 120 85 210
+./executables/flipV ../Images/clown.tga ../Output
+./executables/crop ../Images/Tyler.tga ../Output 24 120 85 210
+./executables/crop ../Images/Renoir.tga ../Output 100 20 60 80
+./executables/flipH ../Images/clown.tga ../Output
+./executables/channel -g ../Images/bottles.tga ../Output
+./executables/gray ../Images/clown.tga ../Output
+./executables/channel -r ../Images/Renoir.tga ../Output
+./executables/channel -b ../Images/Seurat.tga ../Output
+./executables/flipH ../Images/clown.tga ../Output
+./executables/gray ../Images/clown.tga ../Output
