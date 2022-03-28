@@ -7,6 +7,8 @@
 #include <sstream>
 #include <vector>
 #include <list>
+#include <unistd.h>
+#include <string.h>
 
 using namespace std;
 
@@ -48,10 +50,20 @@ int main(int argc, const char * argv[])
 		//	Task 1: Insert here code to send data to child processes
 		//	using pipes.
 		//--------------------------------------------------------------------------
+		int ptoc1[2],ptoc1[2];
 
-
-
+		if (pipe(ptoc1) == -1){
+			perror("messed up")
+		}
+		
+		int p1 = fork();
+		if (p1 == 0){
+			childfunc()
+		}
 	}
+
+
+	MyStruct
 	inFile.close();
 	
 	cout << "Content of vector (" << myVect.size() << " elements)" << endl;
@@ -61,6 +73,20 @@ int main(int argc, const char * argv[])
 		cout << "\t" << myVect[k].m << " \t" << myVect[k].x << endl;
 	}
 	cout  << endl;
+
+
+	MyStruct s1 = {3, 1.5f}, s2 = {6,3.75}
+	char message[BUFFSIZ];
+	sprintf(message, "%d %f", s1.m,s1.x);
+	write(ptoc1[WRITE], message, strlen(message))
+
+	//binary
+	//write(ptoc1[WRITE], adresses to m term, sizeof(int));
+	//write(ptoc1[WRITE], adresses to x term, sizeof(float));
+
+	//sends s2 to c2
+
+
 
 	//--------------------------------------------------------------------------
 	//	Task 2: Insert here code to get results from child processes
