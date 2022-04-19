@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <vector>
 #include <list>
+#include <map>
 
 using namespace std;
 
@@ -38,7 +39,7 @@ void* skierFunc(void* argument);
 
 
 
-void* skierFunc(void* argument, bool trace_path)
+void* skierFunc(void* argument)
 {
 	SkierInfo* data = static_cast<SkierInfo*>(argument);
 
@@ -377,12 +378,13 @@ void* skierFunc(void* argument, bool trace_path)
 				continues = true;
 			}
 		}
-		if(trace_path){
+		if(data->traceMode){
 			path.push_back((bestElev));
 			data->trace = path;
 			
 		}
 		if(bestRow == row && bestCol == col){
+			
 			continues = false;
 		}
 		if(continues){
@@ -409,17 +411,23 @@ int main(int argc, const char* argv[])
     int processes = atoi(argv[3]);
     int run = atoi(argv[4]);
     bool trace = atoi(argv[5]);
+    std::map<float,int> endings;
+	std::map<float,int>::iterator itr;
+    Map map_data = readMap(filePath);
+    (void) map_data;
+    Point startPoint;
+	for(int i = 0; i < run; i++){
+		
+		startPoint.row = rand() % (map_data.height - 1);
+		startPoint.col = rand() % (map_data.width - 1);
+    	SkierInfo skier = {map_data, startPoint, trace};
+		skierFunc(&skier);
+	}
     
-    Map map = readMap(filePath);
-    (void) map;
-    
-    Point startPoint = {3, 4};
-    
-    SkierInfo skier = {map, startPoint, trace};
 
     
 
-    skierFunc(&skier,trace);
+    
 
     return 0;
 }
@@ -441,7 +449,7 @@ Map readMap(const string& filePath)
         inFile.close();
                
         
-	Map map = {numCols, numRows, mapData};
+	Map map_data = {numCols, numRows, mapData};
     
-	return map;
+	return map_data;
 }

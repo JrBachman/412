@@ -1,0 +1,14 @@
+Run with this set of values to see all processes eventually gaining
+access to the lock file (and presumably to the shared resource)
+./lock &
+./lock 3 15 &
+./lock 8 2 &
+clear
+
+
+Run with this set of values to get one of the processes failing to gain
+access to the lock file (and therefore to the shared resource)
+./lock &
+./lock 2 15 &
+./lock 8 2 &
+clear

@@ -1,0 +1,7 @@
+Parent process creates the shared file.
+Process 55171 gained access at time t=4
+Process 55171 released access at time t=9
+Process 55172 gained access at time t=9
+Process 55172 released access at time t=14
+Process 55173 gained access at time t=14
+Process 55173 released access at time t=19
