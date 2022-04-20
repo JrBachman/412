@@ -4,10 +4,12 @@
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
-#include <pthread.h>
 #include <vector>
 #include <list>
 #include <map>
+#include <stdio.h>      /* printf, scanf, puts, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 using namespace std;
 
@@ -18,7 +20,7 @@ struct Map{
 
 struct Point{
     int row, col;
-    float elev;
+    //float elev;
 };
 
 
@@ -39,10 +41,8 @@ void* skierFunc(void* argument);
 
 
 
-void* skierFunc(void* argument)
-{
+void* skierFunc(void* argument){
 	SkierInfo* data = static_cast<SkierInfo*>(argument);
-
 	
 	unsigned short width = data->map.width;
 	unsigned short height = data->map.height;
@@ -50,20 +50,17 @@ void* skierFunc(void* argument)
 	Point startPoint = data->startPoint;
 	
 	float** elev = data->map.data;
+	
 	vector<float> path;
 	unsigned short row = startPoint.row;
 	unsigned short col = startPoint.col;
-	int count = -1;
 	bool continues = true;
-	while(continues)
-	{
+	while(continues){
 		unsigned short bestRow;
 		unsigned short bestCol;
 		float bestElev;
-		bestElev = elev[row][col];
+
 		continues = true;
-		
-		count += 1;
         if (row != 0 && row != height-1 && col != 0 && col != width -1){
             //check cardinal directions
 			//NW
@@ -378,13 +375,15 @@ void* skierFunc(void* argument)
 				continues = true;
 			}
 		}
+		
 		if(data->traceMode){
+			cout << bestElev << endl;
 			path.push_back((bestElev));
 			data->trace = path;
 			
+			
 		}
 		if(bestRow == row && bestCol == col){
-			
 			continues = false;
 		}
 		if(continues){
@@ -411,21 +410,22 @@ int main(int argc, const char* argv[])
     int processes = atoi(argv[3]);
     int run = atoi(argv[4]);
     bool trace = atoi(argv[5]);
-    std::map<float,int> endings;
-	std::map<float,int>::iterator itr;
+
     Map map_data = readMap(filePath);
     (void) map_data;
-    Point startPoint;
-	for(int i = 0; i < run; i++){
-		
-		startPoint.row = rand() % (map_data.height - 1);
-		startPoint.col = rand() % (map_data.width - 1);
-    	SkierInfo skier = {map_data, startPoint, trace};
+	
+    Point startPoint = {10,10};
+	SkierInfo skier = {map_data, startPoint, trace};
+	skierFunc(&skier);
+    
+	int p;
+	for(int i = 0; i < processes; i++){
+		p = fork();
+		pids[i] = p;
+	}
+	if(p==0){
 		skierFunc(&skier);
 	}
-    
-
-    
 
     
 
