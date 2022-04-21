@@ -6,7 +6,7 @@
 //  Itself derived from from "Interprocess Communications in Unix - The Nooks & Crannies"
 //						John Shapley Gray. Prentice Hall PTR, 1998.
 //
-
+//nuts
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -14,6 +14,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
+
+
+
 
 using namespace std;
 
