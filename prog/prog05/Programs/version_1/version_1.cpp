@@ -7,6 +7,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <unistd.h>
 #include <stdio.h>      /* printf, scanf, puts, NULL */
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -421,7 +422,6 @@ int main(int argc, const char* argv[])
 	int p;
 	for(int i = 0; i < processes; i++){
 		p = fork();
-		pids[i] = p;
 	}
 	if(p==0){
 		skierFunc(&skier);
