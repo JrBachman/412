@@ -77,7 +77,7 @@ void setRaster(RasterImage& img, void* raster)
 
 RasterImage copyRasterImage(const RasterImage& image)
 {
-	RasterImage outImage = newImage(image.width, image.height, image.type);
+	RasterImage outImage = newImage(image.width, image.height, image.type,0);
 	memcpy( (unsigned char*) outImage.raster,
 			(char*) image.raster,
 			image.height * image.bytesPerRow);

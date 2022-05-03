@@ -16,6 +16,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <wait.h>
 //
 #include "ImageIO.h"
 

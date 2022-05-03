@@ -22,7 +22,7 @@ RasterImage readImage(const char* filePath)
 	
 	unsigned char *data = readTGA(filePath, &imgWidth, &imgHeight, &imgType);
 	RasterImage img = newImage(imgWidth, imgHeight, imgType, 0);
-	setRaster(img, data);
+	//setRaster(img, data);
 
 	return img;
 }
