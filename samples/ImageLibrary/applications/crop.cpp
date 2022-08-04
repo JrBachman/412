@@ -1,23 +1,22 @@
 /*----------------------------------------------------------------------------------+
-|	startMain																		|
+|	crop	produced a copy of the input image that has been cropped				|
 |																					|
 |	Usage:																			|
-|			./startMain <image file path>  <output folder path>						|
+|			./crop <image file path>  <output folder path>	x y w h					|
+|	where x y are the coordinates  of the crop rectangles upper-left corner, and	|
+|	w and h are the width and height of that rectangle.								|
+|	If the image is named bottles.tga, then the image produced is 					|
+|		bottles [cropped].tga														|
 |																					|
-|	Jean-Yves Hervé, 2021-04-20														|
+|	Jean-Yves Hervé, 2020-10-29														|
 +----------------------------------------------------------------------------------*/
+
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <errno.h>
 //
 #include "ImageIO.h"
+#include "crop.h"
 
 using namespace std;
 
@@ -40,8 +39,14 @@ using ErrorCode = enum
 //	WRONG_FILE_TYPE = 12,
 //	CANNOT_WRITE_FILE = 13,
 	//
-	//	4x codes:	command line argument errors
-	WRONG_NUMBER_OF_ARGUMENTS = 30,
+	//	2x codes:	command line argument errors
+	WRONG_NUMBER_OF_ARGUMENTS = 20,
+	INVALID_CROP_X_TYPE,
+	INVALID_CROP_Y_TYPE,
+	INVALID_CROP_CORNER,
+	INVALID_CROP_WIDTH_TYPE,
+	INVALID_CROP_HEIGHT_TYPE,
+	INVALID_CROP_SIZE
 	
 };
 
@@ -52,6 +57,18 @@ using ErrorCode = enum
 #pragma mark Function prototypes
 //-------------------------------------------------------------------
 #endif
+
+/** interprets the program's input argument to determine the crop region.
+ *	@param	argv	list of input argument to the program
+ *	@param	cropCornerX		x coordinate of crop region's corner
+ *	@param	cropCornerY		y coordinate of crop region's corner
+ *	@param	cropWidth		crop region's width
+ *	@param	cropHeight		crop region's height
+ */
+void extractCropRegion(const char* argv[],
+						unsigned short imageWidth, unsigned short imageHeight,
+						unsigned short* cropCornerX, unsigned short* cropCornerY,
+						unsigned short* cropWidth, unsigned short* cropHeight);
 
 
 /**	In this app, just prints out an error message to the console and
@@ -67,7 +84,7 @@ void errorReport(ErrorCode code, const char* input);
 /**	Produces a complete path to the output image file.
  *	If the input file path was ../../Images/cells.tga and the
  *	and the output folder path is ../Output (with or without final slash),
- *	then the output file path will be ../Output/cells [gray].tga
+ *	then the output file path will be ../Output/cells [cropped].tga
  *
  *	@param inputImagePath	path to the input image
  *	@param outFolderPath	path to the output folder
@@ -82,119 +99,126 @@ const char* produceOutFilePath(const char* inputImagePath, const char* outFolder
 //-------------------------------------------------------------------
 #endif
 
-const char sharedSegmentName[] = "/sharedSegmentCSC412Lab11";
-
 //--------------------------------------------------------------
 //	Main function, expecting as arguments:
-//		inputImagePath outFolderPath
+//		inputImagePath outFolderPath x y width height
 //	It returns an error code (0 for no error)
 //--------------------------------------------------------------
 int main(int argc, const char* argv[])
 {
-	//	We need 2 arguments: filePath outputPath
-	if (argc != 3)
+	//	We need 6 arguments: filePath outputPath cornerX cornerY croppedW croppedW
+	if (argc != 7)
 	{
-		cout << "Proper usage: " << argv[0] << " inputImagePath outFolderPath" << endl;
+		cout << "Proper usage: crop inputImagePath outFolderPath x y width height" << endl;
 		return WRONG_NUMBER_OF_ARGUMENTS;
 	}
-
+	
 	//	Just to look prettier in the code, I give meaningful names to my arguments
 	const char* inputImagePath = argv[1];
 	const char* outFolderPath = argv[2];
-	// Produce the path to the output file
-	const char* outFilePath = produceOutFilePath(inputImagePath, outFolderPath);
 
 	//	Read the image
-	RasterImage imageIn = readImage(inputImagePath);
+	RasterImage image = readImage(inputImagePath);
 
-	//------------------------------------------------------------
-	//	Part 0: Decide what will be passed through shared memory
-	//			and what will be passed as arguments.
-	//------------------------------------------------------------
-	//	width, height, bytes per row --> passed as arguments (exec)
-	//	shared memory: raster
+	//	extract the parameters of the crop region
+	unsigned short cropCornerX, cropCornerY, cropWidth, cropHeight;
+	extractCropRegion(argv, image.width, image.height,
+					  &cropCornerX, &cropCornerY, &cropWidth, &cropHeight);
 	
-	//-----------------------------------
-	//	Part 1: Setup shared memory	
-	//-----------------------------------
-	int SIZE = 4*1024*1024;
-	//...
-	
-	//-----------------------------------------------------------
-	//	Part 2: Copy image information in shared memory (memcpy)
-	//-----------------------------------------------------------
-	//memcpy(      ,        ,  );
-	//       ^         ^     ^
-	//       |         |     |
-	//       |      raster  size (num of bytes)
-	//    shared segment	
-	
-	//--------------------------------------------------------
-	//	Part 3: Now fork & exec to call flipV_shm or gray_shm
-	//			(that was Lab 05. a solution was posted)
-	//--------------------------------------------------------
-	int p = fork();
-	if (p == 0)
-	{
-		//	 child process --> exec the flipV program
-		//	writer the arguments into C strings
-		char sizeStr[12], widthStr[12], heightStr[12], 
-			 bprStr[12];
-		sprintf(sizeStr, "%d", SIZE);
-		sprintf(widthStr, "%d", imageIn.width);
-		sprintf(heightStr, "%d", imageIn.height);
-		sprintf(bprStr, "%d", imageIn.bytesPerRow);
-		
-		execlp("./flipV", "flipV", sharedSegmentName, 
-				sizeStr,  widthStr, heightStr, bprStr, 
-				NULL);
-		
-		// if I make it here, something went wrong
-		cout << "Call to exec failed" << endl;
-		exit(12);
-	}
-	else if (p < 0)
-	{
-		cout << "fork failed" << endl;
-		exit(11);
-	}
+	//	Perform the cropping
+	RasterImage croppedImage = cropImage(image, cropCornerX, cropCornerY, cropWidth, cropHeight);
 
+	// Produce the path to the output file
+	const char* outFilePath = produceOutFilePath(inputImagePath, outFolderPath);
 	
-	//--------------------------------------------------------
-	//	Part 4: Wait for child process to terminate
-	//--------------------------------------------------------
-	int value;
-	waitpid(p, &value, 0);
+	//	Write out the cropped image
+	int err = writeImage(croppedImage, outFilePath);
 	
-	//--------------------------------------------------------
-	//	Part 5: Now create a RasterImage object whose raster
-	//			is actually in shared memory
-	//--------------------------------------------------------
-	RasterImage imageOut /* = {, , , , } */;
-		
-	//	Write out the modified image
-	int err = writeImage(imageOut, outFilePath);
-
-	//--------------------------------------------------------
-	//	Part 6: Unmap and unlink the shared memory
-	//--------------------------------------------------------
-
-
 	//	Cleanup allocations.  Again, this is not really needed, since the full
 	//	partition will get cleared when the process terminates, but I like to
 	//	keep the good habit of freeing memory that I don't need anymore, and,
 	//	if I crash, it's a sign that something went wrong earlier and I may
 	//	have produced junk
-	freeImage(imageIn);
+	freeImage(image);
+	freeImage(croppedImage);
 	free(const_cast<char*>(outFilePath));
 
 	return err;
 }
 
+void errorReport(ErrorCode code, const char* input)
+{
+	if (code != NO_ERROR)
+	{
+		switch (code)
+		{
+			case WRONG_NUMBER_OF_ARGUMENTS:
+			break;
+			
+			case INVALID_CROP_X_TYPE:
+				printf("Third argument is not a positive integer: %s\n", input);
+			break;
+			
+			case INVALID_CROP_Y_TYPE:
+				printf("Fourth argument is not a positive integer: %s\n", input);
+			break;
+			
+			case INVALID_CROP_CORNER:
+				printf("The crop region's upper-left corner must be within the image.\n");
+			break;
+			
+			case INVALID_CROP_WIDTH_TYPE:
+				printf("Fifth argument is not a positive integer: %s\n", input);
+			break;
+			
+			case INVALID_CROP_HEIGHT_TYPE:
+				printf("Sixth argument is not a positive integer: %s\n", input);
+			break;
+			
+			case INVALID_CROP_SIZE:
+			break;
+			
+			default:
+				break;
+		}
+		exit(code);
+	}
+}
+
+void extractCropRegion(const char* argv[],
+					   unsigned short imageWidth, unsigned short imageHeight,
+					   unsigned short* cropCornerX, unsigned short* cropCornerY,
+					   unsigned short* cropWidth, unsigned short* cropHeight)
+{
+	if (sscanf(argv[3], "%hu", cropCornerX) != 1)
+		errorReport(INVALID_CROP_X_TYPE, argv[3]);
+
+	if (sscanf(argv[4], "%hu", cropCornerY) != 1)
+		errorReport(INVALID_CROP_Y_TYPE, argv[3]);
+
+	//	Note: since we read into an unsigned int, a negative value would come out
+	//	as a large positive value
+	if ((*cropCornerX >= imageWidth) || (*cropCornerY >= imageHeight))
+		errorReport(INVALID_CROP_CORNER, nullptr);
+
+	if (sscanf(argv[5], "%hu", cropWidth) != 1)
+		errorReport(INVALID_CROP_WIDTH_TYPE, argv[3]);
+
+	if (sscanf(argv[6], "%hu", cropHeight) != 1)
+		errorReport(INVALID_CROP_HEIGHT_TYPE, argv[3]);
+
+	//	Note: since we read into an unsigned int, a negative value would come out
+	//	as a large positive value
+	if ((*cropCornerX + *cropWidth > imageWidth) ||
+		(*cropCornerY + *cropHeight > imageHeight))
+		errorReport(INVALID_CROP_SIZE, nullptr);
+	
+	//	Otherwise, all is ok, go back to crop
+}
 
 const char* produceOutFilePath(const char* inputImagePath, const char* outFolderPath)
 {
-	const char suffixPlusExt[] = " [out].tga";
+	const char suffixPlusExt[] = " [cropped].tga";
 
 	// Produce the name of the output file
 	//-------------------------------------
@@ -226,3 +250,4 @@ const char* produceOutFilePath(const char* inputImagePath, const char* outFolder
 	
 	return outFilePath;
 }
+

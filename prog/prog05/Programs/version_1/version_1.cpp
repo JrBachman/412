@@ -4,13 +4,9 @@
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
+#include <pthread.h>
 #include <vector>
 #include <list>
-#include <map>
-#include <unistd.h>
-#include <stdio.h>      /* printf, scanf, puts, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
 
 using namespace std;
 
@@ -21,7 +17,7 @@ struct Map{
 
 struct Point{
     int row, col;
-    //float elev;
+    float elev;
 };
 
 
@@ -42,8 +38,10 @@ void* skierFunc(void* argument);
 
 
 
-void* skierFunc(void* argument){
+void* skierFunc(void* argument, bool trace_path)
+{
 	SkierInfo* data = static_cast<SkierInfo*>(argument);
+
 	
 	unsigned short width = data->map.width;
 	unsigned short height = data->map.height;
@@ -51,17 +49,20 @@ void* skierFunc(void* argument){
 	Point startPoint = data->startPoint;
 	
 	float** elev = data->map.data;
-	
 	vector<float> path;
 	unsigned short row = startPoint.row;
 	unsigned short col = startPoint.col;
+	int count = -1;
 	bool continues = true;
-	while(continues){
+	while(continues)
+	{
 		unsigned short bestRow;
 		unsigned short bestCol;
 		float bestElev;
-
+		bestElev = elev[row][col];
 		continues = true;
+		
+		count += 1;
         if (row != 0 && row != height-1 && col != 0 && col != width -1){
             //check cardinal directions
 			//NW
@@ -376,12 +377,10 @@ void* skierFunc(void* argument){
 				continues = true;
 			}
 		}
-		
-		if(data->traceMode){
-			cout << bestElev << endl;
+		if(trace_path){
 			path.push_back((bestElev));
+			cout << bestElev << endl;
 			data->trace = path;
-			
 			
 		}
 		if(bestRow == row && bestCol == col){
@@ -402,32 +401,26 @@ void* skierFunc(void* argument){
 
 int main(int argc, const char* argv[])
 {
-	if(argc != 6){
-        std::cerr << "Usage: Input, Output, Number of processes, Number of runs,flag trace";
-        return 1;
-    }
+	//if(argc != 6){
+    //    std::cerr << "Usage: Input, Output, Number of processes, Number of runs,flag trace";
+    //    return 1;
+    //}
 	string filePath = argv[1];
     FILE *out = fopen(argv[2], "w");
     int processes = atoi(argv[3]);
     int run = atoi(argv[4]);
     bool trace = atoi(argv[5]);
-
-    Map map_data = readMap(filePath);
-    (void) map_data;
-	
-    Point startPoint = {10,10};
-	SkierInfo skier = {map_data, startPoint, trace};
-	skierFunc(&skier);
     
-	int p;
-	for(int i = 0; i < processes; i++){
-		p = fork();
-	}
-	if(p==0){
-		skierFunc(&skier);
-	}
+    Map map = readMap(filePath);
+    (void) map;
+    
+    Point startPoint = {3, 4};
+    
+    SkierInfo skier = {map, startPoint, trace};
 
     
+
+    skierFunc(&skier,trace);
 
     return 0;
 }
@@ -449,7 +442,7 @@ Map readMap(const string& filePath)
         inFile.close();
                
         
-	Map map_data = {numCols, numRows, mapData};
+	Map map = {numCols, numRows, mapData};
     
-	return map_data;
+	return map;
 }
